@@ -1,31 +1,10 @@
 const formatCodeFrame = require('babel-code-frame')
+const CSSFlatError = require('./error')
 const postcss = require('postcss')
 const _ = require('lodash')
 const getSelectorName = require('./getSelectorName')
 const getSelectorType = require('./getSelectorType')
 
-function formatMessage(message, loc, source) {
-    var formatted = message
-    if (loc) {
-        formatted = formatted + ' (' + loc.line + ':' + loc.column + ')'
-    }
-    if (loc && source) {
-        formatted = formatted + '\n\n' + formatCodeFrame(source, loc.line, loc.column) + '\n'
-    }
-    return formatted
-}
-
-function CSSFlatError(name, message, loc, source, error) {
-    Error.call(this)
-    Error.captureStackTrace(this, CSSFlatError)
-    this.name = name
-    this.error = error
-    this.message = formatMessage(message, loc, source)
-    this.hideStack = true
-}
-
-CSSFlatError.prototype = Object.create(Error.prototype)
-CSSFlatError.prototype.constructor = CSSFlatError
 const cacheLocalRuleInfo = {}
 var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
     const { locals = {}, ruleType, prefix } = options
@@ -35,17 +14,15 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
         const exports = {}
         const globalRule = []
         css.walkRules((rule) => {
-            // rule.parent.type === 'atrule' && rule.parent.name !== 'media'
-            // test.push(rule.clone())
-            if(rule.parent.type === 'atrule' && rule.parent.name.indexOf('keyframes') >= 0 ) {
-                return;
+            let parentParams = ''
+            if(rule.parent.type === 'atrule'){
+                if(rule.parent.name === 'supports' || rule.parent.name === 'media') {
+                    parentParams = rule.parent.params
+                } else {
+                    return
+                }
             }
-            let mediaName = ''
-            if(rule.parent.type === 'atrule' && rule.parent.name.indexOf('media') >= 0 ) {
-                //rule.parent.append({ selector: 'a' });
-                //return;
-                mediaName = rule.parent.params
-            }
+
             rule.selector.split(',').forEach((sel) => {
                 const selectorType = getSelectorType(sel, localsMap)
                 const { isGlobal, isClassSelector, selectorHalf = '' } = selectorType
@@ -56,42 +33,40 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                     globalRule.push(cloneRule)
                 } else if (isClassSelector) {
                     const className = sel.replace(/\.| /g, '').replace(selectorHalf, '')
-                    if (rule.parent.type !== 'atrule' || rule.parent.name === 'media') {
-                        rule.walkDecls(function (decl) {
-                            const prop = decl.prop
-                            const value = decl.value
-                            let key = prop + ':' + value + ';' + selectorHalf
-                            if (!cacheLocalRuleInfo[key]) {
-                                const newClassName = getSelectorName(decl, { ruleType, prefix })
-                                let propLen = 0
-                                let priority = ''
-                                if (prop[0] !== '-') {
-                                    propLen = prop.split('-').length
-                                }
-                                for (let i = 1; i < propLen; i++ ) {
-                                    if (i === 1) {
-                                        priority += 'html'
-                                    } else {
-                                        priority += '.css-flat-' + (i - 1)
-                                    }
-                                }
-                                cacheLocalRuleInfo[key] = {
-                                    newClassName,
-                                    selectorHalf, // 伪类后缀
-                                    priority: priority + ' ', // margin-top 权重要大于 margin 不考虑顺序
+                    rule.walkDecls(function (decl) {
+                        const prop = decl.prop
+                        const value = decl.value
+                        let key = prop + ':' + value + ';' + selectorHalf
+                        if (!cacheLocalRuleInfo[key]) {
+                            const newClassName = getSelectorName(decl, parentParams, { ruleType, prefix })
+                            let propLen = 0
+                            let priority = ''
+                            if (prop[0] !== '-') {
+                                propLen = prop.split('-').length
+                            }
+                            for (let i = 1; i < propLen; i++ ) {
+                                if (i === 1) {
+                                    priority += 'html'
+                                } else {
+                                    priority += '.css-flat-' + (i - 1)
                                 }
                             }
-                            if (mediaName) {
-                                localRuleMark[mediaName] = localRuleMark[mediaName] || {}
-                                localRuleMark[mediaName][key] = cacheLocalRuleInfo[key].newClassName
-                            } else {
-                                localRuleMark.normal[key] = cacheLocalRuleInfo[key].newClassName
+                            cacheLocalRuleInfo[key] = {
+                                newClassName,
+                                selectorHalf, // 伪类后缀
+                                priority: priority + ' ', // margin-top 权重要大于 margin 不考虑顺序
                             }
+                        }
+                        if (parentParams) {
+                            localRuleMark[parentParams] = localRuleMark[parentParams] || {}
+                            localRuleMark[parentParams][key] = cacheLocalRuleInfo[key].newClassName
+                        } else {
+                            localRuleMark.normal[key] = cacheLocalRuleInfo[key].newClassName
+                        }
 
-                            const localsKey = localsMap[className]
-                            exports[localsKey] = (exports[localsKey] || '') + cacheLocalRuleInfo[key].newClassName + ' '
-                        })
-                    }
+                        const localsKey = localsMap[className]
+                        exports[localsKey] = (exports[localsKey] || '') + cacheLocalRuleInfo[key].newClassName + ' '
+                    })
                 }
             })
             rule.remove()
@@ -115,18 +90,21 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
 })
 
 module.exports = function processCss(inputSource, inputMap, options, callback) {
-    var query = options.query || {}
-    var root = query.root
+    const { prefix = 'a', minimize, plugins = [], rule = {}, atRuleSuffix = {} } = options.params || {}
 
-    var parserOptions = {
-        root: root,
-        locals: options.locals,
-        prefix: query.prefix || 'a',
+    const pipeline = postcss([
+        parserPlugin({ prefix, rule, atRuleSuffix }),
+    ].concat(plugins))
+
+    if(minimize) {
+        const cssnano = require("cssnano")
+        const minimizeOptions = _.assign({}, minimize)
+        ["zindex", "normalizeUrl", "discardUnused", "mergeIdents", "reduceIdents", "autoprefixer"].forEach(function(name) {
+            if(typeof minimizeOptions[name] === "undefined")
+                minimizeOptions[name] = false;
+        })
+        pipeline.use(cssnano(minimizeOptions))
     }
-
-    var pipeline = postcss([
-        parserPlugin(parserOptions),
-    ])
 
     pipeline.process(inputSource, {
         from: '/css-flat-loader!' + options.from,
@@ -143,16 +121,10 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
             map: result.map && result.map.toJSON(),
             exports: parserOptions.exports,
         })
-    }).catch(function (err) {
+    }).catch((err) => {
         console.log(err)
         if (err.name === 'CssSyntaxError') {
-            var wrappedError = new CSSFlatError(
-                'Syntax Error',
-                err.reason,
-                err.line !== null && err.column !== null ? { line: err.line, column: err.column } : null,
-                err.input.source
-            )
-            callback(wrappedError)
+            callback(new CSSFlatError(err))
         } else {
             callback(err)
         }
