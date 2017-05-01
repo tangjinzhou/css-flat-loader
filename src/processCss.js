@@ -15,9 +15,12 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
         const globalRule = []
         css.walkRules((rule) => {
             let parentParams = ''
+            let keySuffix = '@'
             if(rule.parent.type === 'atrule'){
-                if(rule.parent.name === 'supports' || rule.parent.name === 'media') {
+                const parentName = rule.parent.name
+                if( parentName === 'supports' || parentName === 'media') {
                     parentParams = rule.parent.params
+                    keySuffix = keySuffix + parentName + parentParams
                 } else {
                     return
                 }
@@ -36,7 +39,7 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                     rule.walkDecls(function (decl) {
                         const prop = decl.prop
                         const value = decl.value
-                        let key = prop + ':' + value + ';' + selectorHalf
+                        let key = prop + ':' + value + ';' + selectorHalf + keySuffix
                         if (!cacheLocalRuleInfo[key]) {
                             const newClassName = getSelectorName(decl, parentParams, { ruleType, prefix })
                             let propLen = 0
@@ -54,6 +57,7 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                             cacheLocalRuleInfo[key] = {
                                 newClassName,
                                 selectorHalf, // 伪类后缀
+                                keySuffix,
                                 priority: priority + ' ', // margin-top 权重要大于 margin 不考虑顺序
                             }
                         }
@@ -72,16 +76,15 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
             rule.remove()
         })
         css.walkAtRules('media', rule => {
-            console.log(rule.params)
             for (let key in localRuleMark[rule.params]) {
-                const { newClassName, selectorHalf = '', priority } = cacheLocalRuleInfo[key]
-                rule.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf, '') + '}')
+                const { newClassName, selectorHalf = '', priority, keySuffix } = cacheLocalRuleInfo[key]
+                rule.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf + keySuffix, '') + '}')
             }
         });
 
         for (let key in localRuleMark.normal) {
-            const { newClassName, selectorHalf = '', priority } = cacheLocalRuleInfo[key]
-            css.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf, '') + '}')
+            const { newClassName, selectorHalf = '', priority, keySuffix } = cacheLocalRuleInfo[key]
+            css.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf + keySuffix, '') + '}')
         }
         css.append(globalRule)
 
@@ -92,8 +95,14 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
 module.exports = function processCss(inputSource, inputMap, options, callback) {
     const { prefix = 'a', minimize, plugins = [], rule = {}, atRuleSuffix = {} } = options.params || {}
 
+    const parserOptions = {
+        prefix,
+        rule,
+        atRuleSuffix,
+        locals: options.locals,
+    }
     const pipeline = postcss([
-        parserPlugin({ prefix, rule, atRuleSuffix }),
+        parserPlugin(parserOptions),
     ].concat(plugins))
 
     if(minimize) {

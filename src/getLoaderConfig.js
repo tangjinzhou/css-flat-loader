@@ -7,15 +7,10 @@ const loadPlugins = require('postcss-load-plugins/lib/plugins.js')
 
 module.exports = function cssFlatConfig (ctx, path, options) {
     ctx = assign({ cwd: process.cwd(), env: process.env.NODE_ENV }, ctx)
-
     path = path ? resolve(path) : process.cwd()
-
     options = assign({ rcExtensions: true }, options)
-
     if (!ctx.env) process.env.NODE_ENV = 'development'
-
     let file
-
     return config('css-flat', options)
         .load(path)
         .then(function (result) {

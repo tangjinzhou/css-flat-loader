@@ -46,17 +46,16 @@ module.exports = function (input, map) {
     }
 
     const exports = getEvaluated(input)
-
     Promise.resolve().then(function () {
-        if ( typeof options !== 'undefined' ) {
+        if ( typeof params.plugins !== 'undefined' ) {
             return params
         } else {
             return loadConfig({ webpack: loader }, configPath, { argv: false });
         }
     }).then(function (config) {
         processCss(exports[0][1], map, {
-            from: loaderUtils.getRemainingRequest(this),
-            to: loaderUtils.getCurrentRequest(this),
+            from: loaderUtils.getRemainingRequest(loader),
+            to: loaderUtils.getCurrentRequest(loader),
             params: config,
             loaderContext: this,
             locals: exports.locals,
@@ -86,7 +85,7 @@ module.exports = function (input, map) {
             }
 
             callback(null, 'exports = module.exports = require(' +
-                loaderUtils.stringifyRequest(this, require.resolve('css-loader/lib/css-base')) +
+                loaderUtils.stringifyRequest(loader, require.resolve('css-loader/lib/css-base')) +
                 ')(' + params.sourceMap + ');\n' +
                 '// imports\n' +
                 '' + '\n\n' +
@@ -96,6 +95,7 @@ module.exports = function (input, map) {
                 exportJs)
         }.bind(this))
     }).catch((err) => {
+        console.log(err)
         if (err.name === 'CssSyntaxError') {
             callback(new CSSFlatError(err))
         } else {
