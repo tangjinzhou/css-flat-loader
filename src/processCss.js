@@ -6,7 +6,13 @@ const getSelectorType = require('./getSelectorType')
 
 const cacheLocalRuleInfo = {}
 const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
-    const { locals = {}, ruleType, prefix } = options
+    const {
+        locals = {},
+        prefix,
+        rules,
+        atRules,
+        htmlClass,
+    } = options
     const localsMap = _.invert(locals)
     const localRuleMark = { normal: {} }
     return (css) => {
@@ -40,7 +46,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                         const value = decl.value
                         let key = prop + ':' + value + ';' + selectorHalf + keySuffix
                         if (!cacheLocalRuleInfo[key]) {
-                            const newClassName = getSelectorName(decl, parentParams, { ruleType, prefix })
+                            const newClassName = getSelectorName(decl, parentParams, { rules, prefix, atRules })
                             let propLen = 0
                             let priority = ''
                             if (prop[0] !== '-') {
@@ -50,7 +56,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                                 if (i === 1) {
                                     priority += 'html'
                                 } else {
-                                    priority += '.css-flat-' + (i - 1)
+                                    priority += '.' + htmlClass
                                 }
                             }
                             cacheLocalRuleInfo[key] = {
@@ -74,7 +80,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
             })
             rule.remove()
         })
-        css.walkAtRules('media', rule => {
+        css.walkAtRules(/media|supports/, rule => {
             for (let key in localRuleMark[rule.params]) {
                 const { newClassName, selectorHalf = '', priority, keySuffix } = cacheLocalRuleInfo[key]
                 rule.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf + keySuffix, '') + '}')
@@ -92,13 +98,31 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
 })
 
 module.exports = function processCss(inputSource, inputMap, options, callback) {
-    const { prefix = 'a', minimize, plugins = [], rule = {}, atRuleSuffix = {} } = options.params || {}
+    const {
+        prefix = 'a',
+        minimize,
+        plugins = [],
+        rules = {},
+        atRules = [],
+        htmlClass = 'css-flat',
+    } = options.params || {}
+
+    const tempAtRules = {}
+    atRules.forEach((atRule, i) => {
+        for (let [key, value] of Object.entries(atRule)) {
+            tempAtRules[key] = {
+                suffix: value,
+                priority: new Array(i + 1).fill('.' + htmlClass).join(''),
+            }
+        }
+    })
 
     const parserOptions = {
         prefix,
-        rule,
-        atRuleSuffix,
-        locals: options.locals,
+        rules,
+        atRules: tempAtRules,
+        htmlClass,
+        locals: options.locals || {},
     }
     const pipeline = postcss([
         parserPlugin(parserOptions),

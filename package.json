@@ -1,5 +1,5 @@
 {
-  "name": "css-flat-loader",
+  "name": "@alipay/css-flat-loader",
   "version": "0.1.0",
   "author": "tangjinzhou",
   "description": "css flat loader module for webpack",
@@ -50,6 +50,9 @@
     "type": "git",
     "url": ""
   },
+  "publishConfig": {
+    "registry": "http://registry.npm.alibaba-inc.com"
+  },
   "eslintConfig": {
     "extends": "eslint-config-postcss/es5",
     "env": {
@@ -64,6 +67,7 @@
         2,
         "never"
       ],
+      "no-trailing-spaces": "off",
       "max-len": [
         2,
         180
