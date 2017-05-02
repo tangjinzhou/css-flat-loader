@@ -1,4 +1,3 @@
-const formatCodeFrame = require('babel-code-frame')
 const CSSFlatError = require('./error')
 const postcss = require('postcss')
 const _ = require('lodash')
@@ -6,19 +5,19 @@ const getSelectorName = require('./getSelectorName')
 const getSelectorType = require('./getSelectorType')
 
 const cacheLocalRuleInfo = {}
-var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
+const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
     const { locals = {}, ruleType, prefix } = options
     const localsMap = _.invert(locals)
-    const localRuleMark = {normal: {}}
+    const localRuleMark = { normal: {} }
     return (css) => {
         const exports = {}
         const globalRule = []
         css.walkRules((rule) => {
             let parentParams = ''
             let keySuffix = '@'
-            if(rule.parent.type === 'atrule'){
+            if (rule.parent.type === 'atrule') {
                 const parentName = rule.parent.name
-                if( parentName === 'supports' || parentName === 'media') {
+                if (parentName === 'supports' || parentName === 'media') {
                     parentParams = rule.parent.params
                     keySuffix = keySuffix + parentName + parentParams
                 } else {
@@ -80,7 +79,7 @@ var parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                 const { newClassName, selectorHalf = '', priority, keySuffix } = cacheLocalRuleInfo[key]
                 rule.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf + keySuffix, '') + '}')
             }
-        });
+        })
 
         for (let key in localRuleMark.normal) {
             const { newClassName, selectorHalf = '', priority, keySuffix } = cacheLocalRuleInfo[key]
@@ -105,12 +104,12 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
         parserPlugin(parserOptions),
     ].concat(plugins))
 
-    if(minimize) {
-        const cssnano = require("cssnano")
+    if (minimize) {
+        const cssnano = require('cssnano')
         const minimizeOptions = _.assign({}, minimize)
-        ["zindex", "normalizeUrl", "discardUnused", "mergeIdents", "reduceIdents", "autoprefixer"].forEach(function(name) {
-            if(typeof minimizeOptions[name] === "undefined")
-                minimizeOptions[name] = false;
+        ;['zindex', 'normalizeUrl', 'discardUnused', 'mergeIdents', 'reduceIdents', 'autoprefixer'].forEach((name) => {
+            if (typeof minimizeOptions[name] === 'undefined')
+                minimizeOptions[name] = false
         })
         pipeline.use(cssnano(minimizeOptions))
     }

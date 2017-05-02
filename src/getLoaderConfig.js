@@ -5,7 +5,7 @@ const assign = require('lodash').assign
 
 const loadPlugins = require('postcss-load-plugins/lib/plugins.js')
 
-module.exports = function cssFlatConfig (ctx, path, options) {
+module.exports = function cssFlatConfig(ctx, path, options) {
     ctx = assign({ cwd: process.cwd(), env: process.env.NODE_ENV }, ctx)
     path = path ? resolve(path) : process.cwd()
     options = assign({ rcExtensions: true }, options)
@@ -20,14 +20,15 @@ module.exports = function cssFlatConfig (ctx, path, options) {
 
             return result ? result.config : {}
         })
-        .then(function (config) {
-            if (typeof config === 'function') config = config(ctx)
-            else config = assign(config, ctx)
+        .then((params) => {
+            if (typeof params === 'function') params = params(ctx)
+            else params = assign(params, ctx)
 
-            if (!config.plugins) config.plugins = []
+            if (!params.plugins) params.plugins = []
 
-            return assign({}, config, {
-                plugins: loadPlugins(config),
+            return assign({}, params, {
+                plugins: loadPlugins(params),
+                file,
             })
         })
 }

@@ -5,12 +5,12 @@ module.exports = function getSelectorName(decl, parentParams, opt = {}) {
     let name = []
     const { ruleType, prefix = '' } = opt
     if (ruleType === 'atomic') {
-        // TODO: 暂定使用atomic规则
+        // eslint-disable-line no-warning-comments TODO: 暂定使用atomic规则
     } else {
         name = [prefix, newSel]
         newSel++
     }
-    if(parentParams) {
+    if (parentParams) {
         parentParamsSuffixs[parentParams] = parentParamsSuffixs[parentParams] || parentNum++
         name.push(parentParamsSuffixs[parentParams])
     }

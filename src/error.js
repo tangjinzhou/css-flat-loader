@@ -12,12 +12,11 @@ function formatMessage(message, loc, source) {
 }
 
 function CSSFlatError(error) {
-    const {reason} = error
     Error.call(this)
     Error.captureStackTrace(this, CSSFlatError)
     this.name = 'Syntax Error'
     this.error = error.input.source
-    const loc = err.line !== null && err.column !== null ? { line: err.line, column: err.column } : null
+    const loc = error.line !== null && error.column !== null ? { line: error.line, column: error.column } : null
     this.message = formatMessage(error.reason, loc, error.input.source)
     this.hideStack = true
 }
@@ -25,4 +24,4 @@ function CSSFlatError(error) {
 CSSFlatError.prototype = Object.create(Error.prototype)
 CSSFlatError.prototype.constructor = CSSFlatError
 
-module.exports = CSSFlatError;
+module.exports = CSSFlatError

@@ -6,7 +6,7 @@ const path = require('path')
 const loadConfig = require('./getLoaderConfig')
 
 function getEvaluated(output, modules) {
-    const m = { exports: {}}
+    const m = { exports: {} }
     try {
         const fn = vm.runInThisContext('(function(module, exports, require) {' + output + '})', 'css-loader-output.js')
         fn(m, m.exports, function (module) {
@@ -34,15 +34,15 @@ module.exports = function (input, map) {
     const params = loaderUtils.getOptions(this) || {}
     params.plugins = params.plugins || this.options['css-flat']
 
-    let configPath;
+    let configPath
     if (params.config) {
         if (path.isAbsolute(params.config)) {
-            configPath = params.config;
+            configPath = params.config
         } else {
-            configPath = path.join(process.cwd(), params.config);
+            configPath = path.join(process.cwd(), params.config)
         }
     } else {
-        configPath = path.dirname(file);
+        configPath = path.dirname(file)
     }
 
     const exports = getEvaluated(input)
@@ -50,7 +50,7 @@ module.exports = function (input, map) {
         if ( typeof params.plugins !== 'undefined' ) {
             return params
         } else {
-            return loadConfig({ webpack: loader }, configPath, { argv: false });
+            return loadConfig({ webpack: loader }, configPath, { argv: false })
         }
     }).then(function (config) {
         processCss(exports[0][1], map, {
@@ -59,7 +59,7 @@ module.exports = function (input, map) {
             params: config,
             loaderContext: this,
             locals: exports.locals,
-        }, function (err, result) {
+        }, (err, result) => {
             if (err) return callback(err)
 
             let cssAsString = JSON.stringify(result.source)
@@ -84,7 +84,7 @@ module.exports = function (input, map) {
                 moduleJs = 'exports.push([module.id, ' + cssAsString + ', ""]);'
             }
 
-            callback(null, 'exports = module.exports = require(' +
+            return callback(null, 'exports = module.exports = require(' +
                 loaderUtils.stringifyRequest(loader, require.resolve('css-loader/lib/css-base')) +
                 ')(' + params.sourceMap + ');\n' +
                 '// imports\n' +
@@ -93,7 +93,7 @@ module.exports = function (input, map) {
                 moduleJs + '\n\n' +
                 '// exports\n' +
                 exportJs)
-        }.bind(this))
+        })
     }).catch((err) => {
         console.log(err)
         if (err.name === 'CssSyntaxError') {
