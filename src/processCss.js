@@ -1,6 +1,7 @@
 const CSSFlatError = require('./error')
 const postcss = require('postcss')
 const _ = require('lodash')
+const cssnano = require('cssnano')
 const getSelectorName = require('./getSelectorName')
 const getSelectorType = require('./getSelectorType')
 
@@ -10,7 +11,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
         locals = {},
         prefix,
         rules,
-        atRules,
+        atRulesConfig,
         htmlClass,
     } = options
     const localsMap = _.invert(locals)
@@ -46,7 +47,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                         const value = decl.value
                         let key = prop + ':' + value + ';' + selectorHalf + keySuffix
                         if (!cacheLocalRuleInfo[key]) {
-                            const newClassName = getSelectorName(decl, parentParams, { rules, prefix, atRules })
+                            const newClassName = getSelectorName(decl, parentParams, { rules, prefix, atRulesConfig })
                             let propLen = 0
                             let priority = ''
                             if (prop[0] !== '-') {
@@ -107,12 +108,12 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
         htmlClass = 'css-flat',
     } = options.params || {}
 
-    const tempAtRules = {}
+    const atRulesConfig = {}
     atRules.forEach((atRule, i) => {
         for (let [key, value] of Object.entries(atRule)) {
-            tempAtRules[key] = {
+            atRulesConfig[key] = {
                 suffix: value,
-                priority: new Array(i + 1).fill('.' + htmlClass).join(''),
+                priority: Array(i + 1).fill('.' + htmlClass).join(''),
             }
         }
     })
@@ -120,22 +121,30 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
     const parserOptions = {
         prefix,
         rules,
-        atRules: tempAtRules,
+        atRulesConfig,
         htmlClass,
         locals: options.locals || {},
     }
+
     const pipeline = postcss([
+        cssnano({
+            zindex: false,
+            normalizeUrl: false,
+            discardUnused: false,
+            mergeIdents: false,
+            autoprefixer: false,
+            reduceTransforms: false,
+        }),
         parserPlugin(parserOptions),
     ].concat(plugins))
 
     if (minimize) {
-        const cssnano = require('cssnano')
         const minimizeOptions = _.assign({}, minimize)
         ;['zindex', 'normalizeUrl', 'discardUnused', 'mergeIdents', 'reduceIdents', 'autoprefixer'].forEach((name) => {
             if (typeof minimizeOptions[name] === 'undefined')
                 minimizeOptions[name] = false
         })
-        pipeline.use(cssnano(minimizeOptions))
+        pipeline.use()
     }
 
     pipeline.process(inputSource, {
