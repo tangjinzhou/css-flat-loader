@@ -4,6 +4,7 @@ const _ = require('lodash')
 const cssnano = require('cssnano')
 const getSelectorName = require('./getSelectorName')
 const getSelectorType = require('./getSelectorType')
+const pseudoMapDefault = require('./pseudoMap')
 
 const cacheLocalRuleInfo = {}
 const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
@@ -13,6 +14,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
         rules,
         atRulesConfig,
         htmlClass,
+        pseudoMap,
     } = options
     const localsMap = _.invert(locals)
     const localRuleMark = { normal: {} }
@@ -21,9 +23,10 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
         const globalRule = []
         css.walkRules((rule) => {
             let parentParams = ''
+            let parentName = ''
             let keySuffix = '@'
             if (rule.parent.type === 'atrule') {
-                const parentName = rule.parent.name
+                parentName = rule.parent.name
                 if (parentName === 'supports' || parentName === 'media') {
                     parentParams = rule.parent.params
                     keySuffix = keySuffix + parentName + parentParams
@@ -47,18 +50,14 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                         const value = decl.value
                         let key = prop + ':' + value + ';' + selectorHalf + keySuffix
                         if (!cacheLocalRuleInfo[key]) {
-                            const newClassName = getSelectorName(decl, parentParams, { rules, prefix, atRulesConfig })
+                            const newClassName = getSelectorName(decl, { parentName, parentParams, rules, prefix, atRulesConfig, selectorHalf, pseudoMap })
                             let propLen = 0
                             let priority = ''
                             if (prop[0] !== '-') {
                                 propLen = prop.split('-').length
                             }
                             for (let i = 1; i < propLen; i++ ) {
-                                if (i === 1) {
-                                    priority += 'html'
-                                } else {
-                                    priority += '.' + htmlClass
-                                }
+                                priority += '.' + htmlClass
                             }
                             cacheLocalRuleInfo[key] = {
                                 newClassName,
@@ -82,8 +81,11 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
             rule.remove()
         })
         css.walkAtRules(/media|supports/, rule => {
+            const atRulesConfigKey = ('@' + rule.name + rule.params).replace(/ /g, '')
             for (let key in localRuleMark[rule.params]) {
-                const { newClassName, selectorHalf = '', priority, keySuffix } = cacheLocalRuleInfo[key]
+                const { newClassName, selectorHalf = '', priority: tempP, keySuffix } = cacheLocalRuleInfo[key]
+                const atRulePriority = (atRulesConfig[atRulesConfigKey] || {}).priority || ''
+                const priority = _.trim(atRulePriority + tempP) + ' '
                 rule.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf + keySuffix, '') + '}')
             }
         })
@@ -106,16 +108,19 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
         rules = {},
         atRules = [],
         htmlClass = 'css-flat',
+        pseudoMap = pseudoMapDefault,
     } = options.params || {}
 
     const atRulesConfig = {}
     atRules.forEach((atRule, i) => {
-        for (let [key, value] of Object.entries(atRule)) {
-            atRulesConfig[key] = {
+        for (let key in atRule) {
+            const value = atRule[key]
+            atRulesConfig[key.replace(/ /g, '')] = {
                 suffix: value,
                 priority: Array(i + 1).fill('.' + htmlClass).join(''),
             }
         }
+
     })
 
     const parserOptions = {
@@ -124,6 +129,7 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
         atRulesConfig,
         htmlClass,
         locals: options.locals || {},
+        pseudoMap,
     }
 
     const pipeline = postcss([
@@ -157,6 +163,7 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
             annotation: false,
         },
     }).then(function (result) {
+        console.log(result.css)
         callback(null, {
             source: result.css,
             map: result.map && result.map.toJSON(),
