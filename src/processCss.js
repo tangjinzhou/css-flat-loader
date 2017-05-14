@@ -4,17 +4,17 @@ const _ = require('lodash')
 const cssnano = require('cssnano')
 const getSelectorName = require('./getSelectorName')
 const getSelectorType = require('./getSelectorType')
-const pseudoMapDefault = require('./pseudoMap')
 
 const cacheLocalRuleInfo = {}
 const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
     const {
         locals = {},
         prefix,
-        rules,
         atRulesConfig,
         htmlClass,
         pseudoMap,
+        declPropMap,
+        declValueMap,
     } = options
     const localsMap = _.invert(locals)
     const localRuleMark = { normal: {} }
@@ -46,7 +46,16 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                     rule.walkDecls(function (decl) {
                         const prop = decl.prop
                         const value = decl.value
-                        const newClassName = getSelectorName(decl, { parentName, parentParams, rules, prefix, atRulesConfig, selectorHalf, pseudoMap })
+                        const newClassName = getSelectorName(decl, {
+                            parentName,
+                            parentParams,
+                            prefix,
+                            atRulesConfig,
+                            selectorHalf,
+                            pseudoMap,
+                            declPropMap,
+                            declValueMap,
+                        })
                         if (!cacheLocalRuleInfo[newClassName]) {
                             let propLen = 0
                             let priority = ''
@@ -105,7 +114,9 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
         rules = {},
         atRules = [],
         htmlClass = 'css-flat',
-        pseudoMap = pseudoMapDefault,
+        pseudoMap,
+        declPropMap,
+        declValueMap,
     } = options.params || {}
 
     const atRulesConfig = {}
@@ -127,6 +138,8 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
         htmlClass,
         locals: options.locals || {},
         pseudoMap,
+        declPropMap,
+        declValueMap,
     }
 
     const pipeline = postcss([
