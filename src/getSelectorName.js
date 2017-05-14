@@ -52,6 +52,5 @@ module.exports = function getSelectorName(decl, opt = {}) {
     declValueMap[declValue] = declValueName
 
     name.push(prefix, name1.join('_'), declValueName)
-    console.log(name.join('-'))
     return name.join('-')
 }

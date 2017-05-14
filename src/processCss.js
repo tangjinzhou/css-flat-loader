@@ -24,12 +24,10 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
         css.walkRules((rule) => {
             let parentParams = ''
             let parentName = ''
-            let keySuffix = '@'
             if (rule.parent.type === 'atrule') {
                 parentName = rule.parent.name
                 if (parentName === 'supports' || parentName === 'media') {
                     parentParams = rule.parent.params
-                    keySuffix = keySuffix + parentName + parentParams
                 } else {
                     return
                 }
@@ -48,9 +46,8 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                     rule.walkDecls(function (decl) {
                         const prop = decl.prop
                         const value = decl.value
-                        let key = prop + ':' + value + ';' + selectorHalf + keySuffix
-                        if (!cacheLocalRuleInfo[key]) {
-                            const newClassName = getSelectorName(decl, { parentName, parentParams, rules, prefix, atRulesConfig, selectorHalf, pseudoMap })
+                        const newClassName = getSelectorName(decl, { parentName, parentParams, rules, prefix, atRulesConfig, selectorHalf, pseudoMap })
+                        if (!cacheLocalRuleInfo[newClassName]) {
                             let propLen = 0
                             let priority = ''
                             if (prop[0] !== '-') {
@@ -59,22 +56,23 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                             for (let i = 1; i < propLen; i++ ) {
                                 priority += '.' + htmlClass
                             }
-                            cacheLocalRuleInfo[key] = {
+                            cacheLocalRuleInfo[newClassName] = {
+                                prop,
+                                value,
                                 newClassName,
                                 selectorHalf, // 伪类后缀
-                                keySuffix,
-                                priority: priority + ' ', // margin-top 权重要大于 margin 不考虑顺序
+                                priority: priority + ' ',
                             }
                         }
                         if (parentParams) {
                             localRuleMark[parentParams] = localRuleMark[parentParams] || {}
-                            localRuleMark[parentParams][key] = cacheLocalRuleInfo[key].newClassName
+                            localRuleMark[parentParams][newClassName] = cacheLocalRuleInfo[newClassName]
                         } else {
-                            localRuleMark.normal[key] = cacheLocalRuleInfo[key].newClassName
+                            localRuleMark.normal[newClassName] = cacheLocalRuleInfo[newClassName]
                         }
 
                         const localsKey = localsMap[className]
-                        exports[localsKey] = (exports[localsKey] || '') + cacheLocalRuleInfo[key].newClassName + ' '
+                        exports[localsKey] = (exports[localsKey] || '') + newClassName + ' '
                     })
                 }
             })
@@ -82,20 +80,19 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
         })
         css.walkAtRules(/media|supports/, rule => {
             const atRulesConfigKey = ('@' + rule.name + rule.params).replace(/ /g, '')
-            for (let key in localRuleMark[rule.params]) {
-                const { newClassName, selectorHalf = '', priority: tempP, keySuffix } = cacheLocalRuleInfo[key]
+            for (let newClassName in localRuleMark[rule.params]) {
+                const { selectorHalf = '', priority: tempP, prop, value } = cacheLocalRuleInfo[newClassName]
                 const atRulePriority = (atRulesConfig[atRulesConfigKey] || {}).priority || ''
                 const priority = _.trim(atRulePriority + tempP) + ' '
-                rule.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf + keySuffix, '') + '}')
+                rule.append(priority + '.' + newClassName + selectorHalf + '{' + prop + ':' + value + '}')
             }
         })
 
-        for (let key in localRuleMark.normal) {
-            const { newClassName, selectorHalf = '', priority, keySuffix } = cacheLocalRuleInfo[key]
-            css.append(priority + '.' + newClassName + selectorHalf + '{' + key.replace(';' + selectorHalf + keySuffix, '') + '}')
+        for (let newClassName in localRuleMark.normal) {
+            const { selectorHalf = '', priority, prop, value } = cacheLocalRuleInfo[newClassName]
+            css.append(priority + '.' + newClassName + selectorHalf + '{' + prop + ':' + value + '}')
         }
         css.append(globalRule)
-
         options.exports = exports
     }
 })
