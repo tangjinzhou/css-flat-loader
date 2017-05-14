@@ -1,21 +1,57 @@
-let newSel = 1
+const pseudoMapDefault = require('./pseudoMap')
+const declPropMapDefault = require('./declPropMap')
+const declValueMapDefault = require('./declValueMap')
 let parentNum = 1
+let declPropId = 1
+let declValueId = 1
+let pseudoId = 1
 const parentParamsSuffixs = {}
 module.exports = function getSelectorName(decl, opt = {}) {
-    const { ruleType, prefix = '', parentParams, parentName, atRulesConfig } = opt
-    const name = [prefix]
-    if (ruleType === 'atomic') {
-        // eslint-disable-line no-warning-comments TODO: 暂定使用atomic规则
-    } else {
-        name[1] = newSel
-        newSel++
+    const {
+        prefix = '',
+        parentParams = '',
+        parentName,
+        atRulesConfig,
+        selectorHalf,
+        pseudoMap = pseudoMapDefault,
+        declPropMap = declPropMapDefault,
+        declValueMap = declValueMapDefault,
+    } = opt
+    const { value: declValue, prop: declProp } = decl
+    const name = []
+    const name1 = []
+    let declPropName = ''
+    let declValueName = ''
+    let pseudoName = ''
+    declPropName = declPropMap[declProp] || declPropId++
+    declPropMap[declProp] = declPropName
+    name1.push(declPropName)
+    if (selectorHalf !== '') {
+        pseudoName = pseudoMap[selectorHalf.slice(1).split('(')[0]]
+        if (typeof pseudoName === 'function') {
+            pseudoName = pseudoName(selectorHalf.slice(1))
+        } else if (pseudoName === undefined) {
+            pseudoName = pseudoMap[selectorHalf] || pseudoId++
+            pseudoMap[selectorHalf] = pseudoName
+        }
     }
+
     if (parentParams) {
         const atRulesConfigKey = ('@' + parentName + parentParams).replace(/ /g, '')
         const atRuleSuffix = (atRulesConfig[atRulesConfigKey] || {}).suffix
         parentParamsSuffixs[parentParams] = parentParamsSuffixs[parentParams] || atRuleSuffix || parentNum++
-        // name.push(parentParamsSuffixs[parentParams])
-        name[1] = name[1] + '_' + parentParamsSuffixs[parentParams]
     }
+
+    if (parentParamsSuffixs[parentParams]) {
+        name1.push(pseudoName, parentParamsSuffixs[parentParams])
+    } else if (pseudoName) {
+        name1.push(pseudoName)
+    }
+
+    declValueName = declValueMap[declValue] || declValueId++
+    declValueMap[declValue] = declValueName
+
+    name.push(prefix, name1.join('_'), declValueName)
+    console.log(name.join('-'))
     return name.join('-')
 }
