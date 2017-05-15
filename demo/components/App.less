@@ -1,0 +1,35 @@
+@import "common";
+@grey: #CCCCCC;
+:global(.title){
+  color: red;
+}
+.title {
+  color: black;
+  color: red;
+  border: #fff solid 1px;
+  margin-top: 10px;
+  margin-right: 20px;
+  margin-bottom: 10px;
+
+}
+.title{
+  margin-left: 20px;
+}
+.title:hover{
+  color: @grey;
+}
+:global .main{
+    color: transparent;
+}
+.test, .a{
+  background-color: #DDDDDD;
+
+}
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

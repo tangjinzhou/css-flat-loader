@@ -35,6 +35,10 @@ module.exports = function (input, map) {
     params.plugins = params.plugins || this.options['css-flat']
 
     let configPath
+    /* params.plugins = []
+    params.atRules = [{
+        '@media screen and (min-width: 480px)': 'm1',
+    }] */
     if (params.config) {
         if (path.isAbsolute(params.config)) {
             configPath = params.config
@@ -44,7 +48,6 @@ module.exports = function (input, map) {
     } else {
         configPath = path.dirname(file)
     }
-
     const exports = getEvaluated(input)
     Promise.resolve().then(function () {
         if ( typeof params.plugins !== 'undefined' ) {
