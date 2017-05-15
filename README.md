@@ -32,10 +32,10 @@ Flat化之后：
 .a-m-2 {
     margin: 0 auto;
 } 
-.a-c_h-3 {
+.a-c_h-3:hover {
     color: green;
 }
-.css-flat .a-mt_h-4 {
+.css-flat .a-mt_h-4:hover {
     margin-top: 10px;
 }
 ```
@@ -67,6 +67,10 @@ element.innerHTML = '<div class="' + styles.className + '">';
 目前依赖在CSS Modules的基础上来判断是否需要Flat话，后续会独立出来，详见demo
 
 ### API
+
+### 更多
+对于一些大型webview APP可按照规则容器内置通用common.css, 上线时做一次diff，仅需线上加载common.css不包含的CSS，
+进一步降低样式文件，提升加载速度。
 
 
 
