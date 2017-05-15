@@ -20,7 +20,7 @@ module.exports = {
             },
             {
                 test: /\.less$/,
-                // loader: "style-loader!@alipay/css-flat-loader!css-loader?modules!less-loader",
+                // loader: "style-loader!css-flat-loader!css-loader?modules!less-loader",
                 loader: ExtractTextPlugin.extract("css-flat-loader!css?modules&localIdentName=_[local]_!less"),
             },
         ]

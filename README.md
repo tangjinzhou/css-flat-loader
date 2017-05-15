@@ -65,6 +65,23 @@ element.innerHTML = '<div class="' + styles.className + '">';
 
 ### 使用方法
 目前依赖在CSS Modules的基础上来判断是否需要Flat话，后续会独立出来，详见demo
+```js
+{
+    test: /\.less$/,
+    // loader: "style-loader!css-flat-loader!css-loader?modules!less-loader",
+    loader: ExtractTextPlugin.extract("css-flat-loader!css?modules&localIdentName=_[local]_!less")
+},
+```
+```js
+// 配置文件css-flat.config.js
+module.exports = {
+  plugins: [
+    require('precss')(),
+    require('autoprefixer')(),
+  ]
+}
+```
+注：对于px2rem, autoprefixer等推荐在css-flat.config.js的plugins中配置
 
 ### API
 
