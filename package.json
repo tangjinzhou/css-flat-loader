@@ -1,6 +1,6 @@
 {
   "name": "css-flat-loader",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "tangjinzhou",
   "description": "css flat loader module for webpack",
   "engines": {

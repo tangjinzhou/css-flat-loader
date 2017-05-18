@@ -23,19 +23,19 @@ CSS Flat 将CSS样式格式化为单条样式，开发时只需要按照正常�
 ```
 Flat化之后：
 ```css
-.a-d-b {
+.-d-b {
     display: block;
 }
-.a-c-1 {
+.-c-1 {
     color: red;
 }
-.a-m-2 {
+.-m-2 {
     margin: 0 auto;
 } 
-.a-c_h-3:hover {
+.-c_h-3:hover {
     color: green;
 }
-.css-flat .a-mt_h-4:hover {
+.css-flat .-mt_h-4:hover {
     margin-top: 10px;
 }
 ```
@@ -64,6 +64,9 @@ element.innerHTML = '<div class="' + styles.className + '">';
 3. 媒体查询权重大于普通样式，不同条件的媒体查询权重需自行配置
 
 ### 使用方法
+```js
+ npm install --save-dev css-flat-loader
+```
 目前依赖在CSS Modules的基础上来判断是否需要Flat话，后续会独立出来，详见demo
 ```js
 {
@@ -72,6 +75,9 @@ element.innerHTML = '<div class="' + styles.className + '">';
     loader: ExtractTextPlugin.extract("css-flat-loader!css?modules&localIdentName=_[local]_!less")
 },
 ```
+
+### API
+
 ```js
 // 配置文件css-flat.config.js
 module.exports = {
@@ -83,7 +89,24 @@ module.exports = {
 ```
 注：对于px2rem, autoprefixer等推荐在css-flat.config.js的plugins中配置
 
-### API
+flat后的样式公式如下：
+
+```css
+    .htmlClass*n .prefix-declProp(_(pseudo)(_atRule))-declValue {}
+```
+1. htmlClass 根节点类名，用来增加权重，如margin-top的权重大于margin，n为'-'的个数
+2. 当atRule存在，但无伪类时，pseudo为空字符，但下划线(_)保留，避免冲突
+3. 当提供的map映射无相关属性时，脚本会自动从1自增分配，所以如需自定义提供map，不要提供数字，以免冲突
+
+|    属性    | 类型 | 默认值 | 描述 |
+| ---------- | --- | --- | --- |
+|**`htmlClass`**|`{string}`|`'css-flat'`|根节点类名，请自行在html标签上添加|
+|**`prefix`**|`{string}`|`''`|类名前缀|
+|**`declPropMap`**|`{Object}`|`见[属性映射]()`|属性映射|
+|**`pseudoMap`**|`{Object}`|`见[伪类映射]()`|伪类映射|
+|**`atRules`**|`{Array}`|`[]`|@规则的映射，如@media等，数组顺序代表权重|
+|**`declValueMap`**|`{Object}`|`见[值映射]()`|值映射|
+|**`plugins`**|`{Array}`|`[]`|插件|
 
 ### 更多
 对于一些大型webview APP可按照规则容器内置通用common.css, 上线时做一次diff，仅需线上加载common.css不包含的CSS，

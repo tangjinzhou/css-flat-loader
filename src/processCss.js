@@ -108,10 +108,9 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
 
 module.exports = function processCss(inputSource, inputMap, options, callback) {
     const {
-        prefix = 'a',
+        prefix = '',
         minimize,
         plugins = [],
-        rules = {},
         atRules = [],
         htmlClass = 'css-flat',
         pseudoMap,
@@ -133,7 +132,6 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
 
     const parserOptions = {
         prefix,
-        rules,
         atRulesConfig,
         htmlClass,
         locals: options.locals || {},
