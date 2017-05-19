@@ -43,7 +43,7 @@ Flat化之后：
 的信息（className: newClassNames）:
 
 ```js
-import styles from "./style.css"; // { classNames: 'a-d-b a-c-1 a-m-2 a-c_h-3 a-mt_h-4 '}
+import styles from "./style.css"; // { classNames: '-d-b -c-1 -m-2 -c_h-3 -mt_h-4 '}
 // import { className } from "./style.css";
 
 element.innerHTML = '<div class="' + styles.className + '">';

@@ -30,7 +30,7 @@
     "webpack-dev-server": "^1.14.1"
   },
   "devDependencies": {
-    "css-flat-loader": "^0.1.1",
+    "css-flat-loader": "latest",
     "extract-text-webpack-plugin": "^1.0.1",
     "gh-pages": "^0.11.0"
   }
