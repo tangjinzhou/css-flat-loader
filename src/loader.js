@@ -26,7 +26,7 @@ function getEvaluated(output, modules) {
     return m.exports
 }
 
-module.exports = function (input, map) {
+module.exports = function (input) {
     if (this.cacheable) this.cacheable()
     const callback = this.async()
     const loader = this
@@ -35,10 +35,13 @@ module.exports = function (input, map) {
     params.plugins = params.plugins || this.options['css-flat']
 
     let configPath
+
     /* params.plugins = []
-    params.atRules = [{
-        '@media screen and (min-width: 480px)': 'm1',
-    }] */
+     params.sourceMap = true
+     params.atRules = [{
+     '@media screen and (min-width: 480px)': 'm1',
+     }]*/
+
     if (params.config) {
         if (path.isAbsolute(params.config)) {
             configPath = params.config
@@ -56,11 +59,16 @@ module.exports = function (input, map) {
             return loadConfig({ webpack: loader }, configPath, { argv: false })
         }
     }).then(function (config) {
-        processCss(exports[0][1], map, {
+        let inputMap = null
+        if (config.sourceMap && exports[0][3]) {
+            inputMap = JSON.stringify(exports[0][3])
+        }
+
+        processCss(exports[0][1], inputMap, {
             from: loaderUtils.getRemainingRequest(loader),
             to: loaderUtils.getCurrentRequest(loader),
             params: config,
-            loaderContext: this,
+            loaderContext: loader,
             locals: exports.locals,
         }, (err, result) => {
             if (err) return callback(err)
@@ -73,14 +81,7 @@ module.exports = function (input, map) {
 
             let moduleJs
             if (config.sourceMap && result.map) {
-                map = result.map
-                if (map.sources) {
-                    map.sources = map.sources.map(function (source) {
-                        return source.split('!').pop()
-                    }, this)
-                    map.sourceRoot = ''
-                }
-                map.file = map.file.split('!').pop()
+                let map = result.map
                 map = JSON.stringify(map)
                 moduleJs = 'exports.push([module.id, ' + cssAsString + ', "", ' + map + ']);'
             } else {

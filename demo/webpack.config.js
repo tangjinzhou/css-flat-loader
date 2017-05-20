@@ -20,8 +20,8 @@ module.exports = {
             },
             {
                 test: /\.less$/,
-                // loader: "style-loader!css-flat-loader!css-loader?modules!less-loader",
-                loader: ExtractTextPlugin.extract("css-flat-loader!css?modules&localIdentName=_[local]_!less"),
+                loader: "style-loader!css-flat-loader!css-loader?modules&localIdentName=[path][name]---[local]---[hash:base64:5]&sourceMap!less-loader?sourceMap",
+                //loader: ExtractTextPlugin.extract("css-flat!css?modules&localIdentName=_[local]_&sourceMap!less?sourceMap"),
             },
         ]
     },
@@ -29,9 +29,6 @@ module.exports = {
         new ExtractTextPlugin("[name].css", {
             allChunks: true,
             disable: false
-        }),
-        new webpack.optimize.UglifyJsPlugin({
-            compress: { warnings: false }
         })
     ]
 };

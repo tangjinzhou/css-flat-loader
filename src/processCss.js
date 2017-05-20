@@ -9,18 +9,21 @@ const cacheLocalRuleInfo = {}
 const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
     const {
         locals = {},
-        prefix,
+        prefix = '',
         atRulesConfig,
-        htmlClass,
+        htmlClass = 'css-flat',
         pseudoMap,
         declPropMap,
         declValueMap,
+        sourceMap,
+        inputMap,
     } = options
+    const genMap = sourceMap && inputMap
     const localsMap = _.invert(locals)
     const localRuleMark = { normal: {} }
     return (css) => {
         const exports = {}
-        const globalRule = []
+        // const globalRule = []
         css.walkRules((rule) => {
             let parentParams = ''
             let parentName = ''
@@ -40,7 +43,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                     const globalSel = _.trim(sel)
                     const cloneRule = rule.clone()
                     cloneRule.selector = globalSel
-                    globalRule.push(cloneRule)
+                    // globalRule.push(cloneRule)
                 } else if (isClassSelector) {
                     const className = sel.replace(/\.| /g, '').replace(selectorHalf, '')
                     rule.walkDecls(function (decl) {
@@ -81,11 +84,18 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                         }
 
                         const localsKey = localsMap[className]
-                        exports[localsKey] = (exports[localsKey] || '') + newClassName + ' '
+                        exports[localsKey] = (exports[localsKey] || (genMap ? className : '')) + ' ' + newClassName
+                        if (genMap) {
+                            decl.prop = '--sourceMap-' + prop
+                            decl.value = value
+                        }
                     })
                 }
+                if (!genMap) {
+                    rule.remove()
+                }
             })
-            rule.remove()
+
         })
         css.walkAtRules(/media|supports/, rule => {
             const atRulesConfigKey = ('@' + rule.name + rule.params).replace(/ /g, '')
@@ -101,21 +111,17 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
             const { selectorHalf = '', priority, prop, value } = cacheLocalRuleInfo[newClassName]
             css.append(priority + '.' + newClassName + selectorHalf + '{' + prop + ':' + value + '}')
         }
-        css.append(globalRule)
         options.exports = exports
     }
 })
 
 module.exports = function processCss(inputSource, inputMap, options, callback) {
     const {
-        prefix = '',
         minimize,
-        plugins = [],
         atRules = [],
         htmlClass = 'css-flat',
-        pseudoMap,
-        declPropMap,
-        declValueMap,
+        plugins = [],
+        sourceMap,
     } = options.params || {}
 
     const atRulesConfig = {}
@@ -130,15 +136,11 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
 
     })
 
-    const parserOptions = {
-        prefix,
+    const parserOptions = _.assign({}, options.params, {
         atRulesConfig,
-        htmlClass,
         locals: options.locals || {},
-        pseudoMap,
-        declPropMap,
-        declValueMap,
-    }
+        inputMap,
+    })
 
     const pipeline = postcss([
         cssnano({
@@ -160,18 +162,16 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
         })
         pipeline.use()
     }
-
     pipeline.process(inputSource, {
         from: '/css-flat-loader!' + options.from,
         to: options.to,
-        map: {
+        map: sourceMap ? {
             prev: inputMap,
             sourcesContent: true,
             inline: false,
             annotation: false,
-        },
+        } : null,
     }).then(function (result) {
-        console.log(result.css)
         callback(null, {
             source: result.css,
             map: result.map && result.map.toJSON(),

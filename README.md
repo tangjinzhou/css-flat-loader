@@ -107,6 +107,7 @@ flat后的样式公式如下：
 |**`atRules`**|`{Array}`|`[]`|@规则的映射，如@media等，数组顺序代表权重|
 |**`declValueMap`**|`{Object}`|见[值映射](https://github.com/tangjinzhou/css-flat-loader/blob/master/src/declValueMap.js)|值映射|
 |**`plugins`**|`{Array}`|`[]`|插件|
+|**`sourceMap`**|`{Bool}`|`false`|sourceMap为true时，会保留css modules hash之后的类，但属性会改变成`--sourceMap-xxx`, 间接达到sourceMap的功能|
 
 ### 更多
 对于一些大型webview APP可按照规则容器内置通用common.css, 上线时做一次diff，仅需线上加载common.css不包含的CSS，
