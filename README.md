@@ -23,19 +23,19 @@ CSS Flat 将CSS样式格式化为单条样式，开发时只需要按照正常�
 ```
 Flat化之后：
 ```css
-.-d-b {
+.a-d-b {
     display: block;
 }
-.-c-1 {
+.a-c-1 {
     color: red;
 }
-.-m-2 {
+.a-m-2 {
     margin: 0 auto;
 } 
-.-c_h-3:hover {
+.a-c_h-3:hover {
     color: green;
 }
-.css-flat .-mt_h-4:hover {
+.css-flat .a-mt_h-4:hover {
     margin-top: 10px;
 }
 ```
@@ -43,7 +43,7 @@ Flat化之后：
 的信息（className: newClassNames）:
 
 ```js
-import styles from "./style.css"; // { classNames: '-d-b -c-1 -m-2 -c_h-3 -mt_h-4 '}
+import styles from "./style.css"; // { classNames: 'a-d-b a-c-1 a-m-2 a-c_h-3 a-mt_h-4 '}
 // import { className } from "./style.css";
 
 element.innerHTML = '<div class="' + styles.className + '">';
@@ -101,7 +101,7 @@ flat后的样式公式如下：
 |    属性    | 类型 | 默认值 | 描述 |
 | ---------- | --- | --- | --- |
 |**`htmlClass`**|`{string}`|`'css-flat'`|根节点类名，请自行在html标签上添加|
-|**`prefix`**|`{string}`|`''`|类名前缀|
+|**`prefix`**|`{string}`|`'a'`|类名前缀|
 |**`declPropMap`**|`{Object}`|见[属性映射](https://github.com/tangjinzhou/css-flat-loader/blob/master/src/declPropMap.js)|属性映射|
 |**`pseudoMap`**|`{Object}`|见[伪类映射](https://github.com/tangjinzhou/css-flat-loader/blob/master/src/pseudoMap.js)|伪类映射|
 |**`atRules`**|`{Array}`|`[]`|@规则的映射，如@media等，数组顺序代表权重|
