@@ -4,7 +4,9 @@ const CSSFlatError = require('./error')
 const vm = require('vm')
 const path = require('path')
 const loadConfig = require('./getLoaderConfig')
-
+const urlItemRegExpG = /___CSS_FLAT_LOADER_URL___([0-9]+)___/g
+const urlItemRegExp = /___CSS_FLAT_LOADER_URL___([0-9]+)___/
+const urlItems = []
 function getEvaluated(output, modules) {
     const m = { exports: {} }
     try {
@@ -16,7 +18,9 @@ function getEvaluated(output, modules) {
                 module = module.substr(19)
             if (modules && modules[module])
                 return modules[module]
-            return '{' + module + '}'
+            const loaderUrl = '___CSS_FLAT_LOADER_URL___' + urlItems.length + '___'
+            urlItems.push({ url: module })
+            return loaderUrl
         })
     } catch (e) {
         throw e
@@ -35,12 +39,9 @@ module.exports = function (input) {
     params.plugins = params.plugins || this.options['css-flat']
 
     let configPath
-
-    /* params.plugins = []
-     params.sourceMap = true
-     params.atRules = [{
-     '@media screen and (min-width: 480px)': 'm1',
-     }]*/
+/*
+     params.plugins = []
+     params.sourceMap = true */
 
     if (params.config) {
         if (path.isAbsolute(params.config)) {
@@ -74,6 +75,14 @@ module.exports = function (input) {
             if (err) return callback(err)
 
             let cssAsString = JSON.stringify(result.source)
+            cssAsString = cssAsString.replace(urlItemRegExpG, (item) => {
+                const match = urlItemRegExp.exec(item)
+                const idx = +match[1]
+                const urlItem = urlItems[idx]
+                const urlRequest = urlItem.url
+                return '\" + require(' + loaderUtils.stringifyRequest(this, urlRequest) + ') + \"'
+            })
+            console.log(cssAsString)
             let exportJs = JSON.stringify(result.exports)
             if (exportJs) {
                 exportJs = 'exports.locals = ' + exportJs + ';'

@@ -9,7 +9,7 @@ const cacheLocalRuleInfo = {}
 const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
     const {
         locals = {},
-        prefix = '',
+        prefix = 'a',
         atRulesConfig,
         htmlClass = 'css-flat',
         pseudoMap,
@@ -20,12 +20,12 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
     } = options
     const genMap = sourceMap && inputMap
     const localsMap = _.invert(locals)
-    const localRuleMark = { normal: {} }
+    const localRuleMark = {}
     return (css) => {
         const exports = {}
         // const globalRule = []
         css.walkRules((rule) => {
-            let parentParams = ''
+            let parentParams = 'normal'
             let parentName = ''
             if (rule.parent.type === 'atrule') {
                 parentName = rule.parent.name
@@ -47,7 +47,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                 } else if (isClassSelector) {
                     const className = sel.replace(/\.| /g, '').replace(selectorHalf, '')
                     rule.walkDecls(function (decl) {
-                        const prop = decl.prop
+                        const prop = decl.prop.replace('--sourceMap-', '')
                         const value = decl.value
                         const newClassName = getSelectorName(decl, {
                             parentName,
@@ -74,14 +74,11 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                                 newClassName,
                                 selectorHalf, // 伪类后缀
                                 priority: priority + ' ',
+                                parentParams,
                             }
                         }
-                        if (parentParams) {
-                            localRuleMark[parentParams] = localRuleMark[parentParams] || {}
-                            localRuleMark[parentParams][newClassName] = cacheLocalRuleInfo[newClassName]
-                        } else {
-                            localRuleMark.normal[newClassName] = cacheLocalRuleInfo[newClassName]
-                        }
+                        localRuleMark[parentParams] = localRuleMark[parentParams] || {}
+                        localRuleMark[parentParams][newClassName] = cacheLocalRuleInfo[newClassName]
 
                         const localsKey = localsMap[className]
                         exports[localsKey] = (exports[localsKey] || (genMap ? className : '')) + ' ' + newClassName
@@ -109,7 +106,8 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
 
         for (let newClassName in localRuleMark.normal) {
             const { selectorHalf = '', priority, prop, value } = cacheLocalRuleInfo[newClassName]
-            css.append(priority + '.' + newClassName + selectorHalf + '{' + prop + ':' + value + '}')
+            const newSelector = priority + '.' + newClassName + selectorHalf
+            css.append(newSelector + '{' + prop + ':' + value + '}')
         }
         options.exports = exports
     }

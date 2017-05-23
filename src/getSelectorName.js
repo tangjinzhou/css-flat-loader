@@ -36,7 +36,7 @@ module.exports = function getSelectorName(decl, opt = {}) {
         }
     }
 
-    if (parentParams) {
+    if (parentParams !== 'normal') {
         const atRulesConfigKey = ('@' + parentName + parentParams).replace(/ /g, '')
         const atRuleSuffix = (atRulesConfig[atRulesConfigKey] || {}).suffix
         parentParamsSuffixs[parentParams] = parentParamsSuffixs[parentParams] || atRuleSuffix || parentNum++
