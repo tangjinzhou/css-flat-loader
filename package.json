@@ -1,6 +1,6 @@
 {
   "name": "css-flat-loader",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "author": "tangjinzhou",
   "description": "css flat loader module for webpack",
   "engines": {
@@ -50,7 +50,7 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git@github.com:tangjinzhou/css-flat-loader"
   },
   "eslintConfig": {
     "extends": "eslint-config-postcss/es5",

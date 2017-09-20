@@ -31,7 +31,7 @@ Flat化之后：
 }
 .a-m-2 {
     margin: 0 auto;
-} 
+}
 .a-c_h-3:hover {
     color: green;
 }
@@ -75,6 +75,20 @@ element.innerHTML = '<div class="' + styles.className + '">';
     loader: ExtractTextPlugin.extract("css-flat-loader!css?modules&localIdentName=_[local]_!less")
 },
 ```
+
+### stylelint设置
+建议添加如下设置来对样式文件进行检测：
+declaration-block-no-shorthand-property-overrides: true
+[查看](https://stylelint.io/user-guide/rules/declaration-block-no-shorthand-property-overrides/)
+
+max-nesting-depth: [0, ignore: ["blockless-at-rules"]]
+[查看](https://stylelint.io/user-guide/rules/max-nesting-depth/)
+
+selector-max-class: 1
+[查看](https://stylelint.io/user-guide/rules/selector-max-class/)
+
+selector-max-id: 0
+[查看](https://stylelint.io/user-guide/rules/selector-max-id/)
 
 ### API
 
@@ -142,12 +156,12 @@ flat后的样式公式如下：
 答：推荐使用less如下方式：
 ```css
 .button{
-} 
+}
 .button-diabled{
   .button()
 }
 ```
- 
+
 因扁平化处理后的样式顺序改变不应该影响最终的渲染结果，所以单个html标签上的类名不应该出现相同属性的样式，直接使用style.button + style.disabled的方式是不安全的。
 细心的朋友可能已经注意到我们的规则.prefix-declProp(_(pseudo)(_atRule))-declValue {} 既有-又有_ 这两种分隔符，这里就是预留给处理相同属性的，你可以自己处理declProp(_(pseudo)(_atRule))相同的部分。
 
