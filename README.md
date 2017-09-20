@@ -78,6 +78,7 @@ element.innerHTML = '<div class="' + styles.className + '">';
 
 ### stylelint设置
 建议添加如下设置来对样式文件进行检测：
+
 declaration-block-no-shorthand-property-overrides: true
 [查看](https://stylelint.io/user-guide/rules/declaration-block-no-shorthand-property-overrides/)
 
