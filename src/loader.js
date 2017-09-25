@@ -82,7 +82,6 @@ module.exports = function (input) {
                 const urlRequest = urlItem.url
                 return '\" + require(' + loaderUtils.stringifyRequest(this, urlRequest) + ') + \"'
             })
-            console.log(cssAsString)
             let exportJs = JSON.stringify(result.exports)
             if (exportJs) {
                 exportJs = 'exports.locals = ' + exportJs + ';'

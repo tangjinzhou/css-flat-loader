@@ -88,7 +88,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                         }
                     })
                 }
-                if (!genMap) {
+                if (!genMap && !isGlobal) {
                     rule.remove()
                 }
             })
