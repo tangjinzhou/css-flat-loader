@@ -28,7 +28,7 @@ module.exports = {
     plugins: [
         new ExtractTextPlugin("[name].css", {
             allChunks: true,
-            disable: false
-        })
+        }),
+        new OptimizeCssAssetsPlugin(),
     ]
 };
