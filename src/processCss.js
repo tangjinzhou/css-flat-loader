@@ -6,7 +6,7 @@ const getSelectorName = require('./getSelectorName')
 const getSelectorType = require('./getSelectorType')
 
 const cacheLocalRuleInfo = {}
-const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
+const parserPlugin = postcss.plugin('postcss-flat', (options) => {
     const {
         locals = {},
         prefix = 'a',
@@ -65,7 +65,7 @@ const parserPlugin = postcss.plugin('postcss-flat',  (options) => {
                             if (prop[0] !== '-') {
                                 propLen = prop.split('-').length
                             }
-                            for (let i = 1; i < propLen; i++ ) {
+                            for (let i = 1; i < propLen; i++) {
                                 priority += '.' + htmlClass
                             }
                             cacheLocalRuleInfo[newClassName] = {
@@ -158,8 +158,9 @@ module.exports = function processCss(inputSource, inputMap, options, callback) {
             if (typeof minimizeOptions[name] === 'undefined')
                 minimizeOptions[name] = false
         })
-        pipeline.use()
+        pipeline.use(cssnano(minimizeOptions))
     }
+
     pipeline.process(inputSource, {
         from: '/css-flat-loader!' + options.from,
         to: options.to,

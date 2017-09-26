@@ -39,9 +39,9 @@ module.exports = function (input) {
     params.plugins = params.plugins || this.options['css-flat']
 
     let configPath
-/*
-     params.plugins = []
-     params.sourceMap = true */
+
+    //  params.plugins = []
+    //  params.sourceMap = true
 
     if (params.config) {
         if (path.isAbsolute(params.config)) {
